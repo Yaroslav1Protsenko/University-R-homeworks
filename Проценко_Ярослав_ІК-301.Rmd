@@ -1,0 +1,130 @@
+# First Steps
+
+My [GitHub](https://github.com/Yaroslav1Protsenko/University-R-homeworks)  
+
+# Lets start
+
+---
+title: "Лабораторна 1. ІК-301"
+author: "Проценко Ярослав"
+date: '2022-05-01'
+output: html_document
+---
+
+```{r include=FALSE}
+library(tidyverse)
+```
+
+Нижче подано scatterplot, який використовує стовпці hwy та cty набору даних mpg
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy))
+```
+
+Нижче подано scatterplot, який використовує стовпці hwy та cty набору даних mpg, та позначає різні класи авто різними кольорами
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy, color=class))
+```
+
+Нижче подано серію scatterplot, по одному на кожний клас авто 
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy, color=class)) +
+  facet_wrap(~ class, nrow = 3)
+```
+
+Нижче подано сітку scatterplot, класифікований за кількістю циліндрів та приводом
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy)) +
+  facet_grid(drv ~ cyl)
+```
+
+Нижче подано дві сітки scatterplot, класифіковані за кількістю циліндрів та приводом окремо
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy)) +
+  facet_grid(drv ~ .)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy)) +
+  facet_grid(. ~ cyl)
+```
+
+Нижче подана scatterplot, у якій результати наближені до вигляду лінії 
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = cty, y = hwy, color=drv))
+```
+
+Нижче подані дві scatterplot, у яких результати наближені до вигляду лінії і подані у вигляді точок одночасно. На другій діаграмі, лінією представлено результати лише одного класу авто 
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth()
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+```
+
+Нижче подана блокова діаграма, яка показує пропорції кількості діамантів різної якості
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, y = stat(prop), group = 1))
+```
+
+Нижче подана блокова діаграма, яка показує кількість діамантів різної якості, та пропорції їх прозорості
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity))
+```
+
+Нижче подані три види побудови блочних діаграм, які є альтернативою попередньому 
+```{r}
+ggplot(data = diamonds, mapping = aes(x = cut, colour = clarity)) + 
+  geom_bar(fill = NA, position = "identity")
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+```
+
+Нижче подана scatterplot, де кожній точці було додано трохи "шуму", щоб вони не зливалися в одну через округлення
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy), position="jitter")
+```
+
+Нижче подані діаграми, створені у різних координатних системах, а також продемонстровані функції зміни осей місцями та задання правильного відношення сторін 
+```{r}
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot()
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot() +
+  coord_flip()
+
+nz <- map_data("nz")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_quickmap()
+
+bar <- ggplot(data = diamonds) + 
+  geom_bar(
+    mapping = aes(x = cut, fill = cut), 
+    show.legend = FALSE,
+    width = 1
+  ) + 
+  theme(aspect.ratio = 1) +
+  labs(x = NULL, y = NULL)
+
+bar + coord_flip()
+bar + coord_polar()
+```
