@@ -1,0 +1,181 @@
+# First Steps
+
+My [GitHub](https://github.com/Yaroslav1Protsenko/University-R-homeworks)  
+
+# Lets start
+
+---
+title: "Проценко_Ярослав ІК-301. Tidyverse, ПР3"
+author: "Проценко Ярослав"
+date: '2022-05-28'
+output: html_document
+editor_options: 
+chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dplyr)
+```
+Предметом вивчення цієї лабораторної роботи є набір даних про комп'ютерні ігри, які були оцінені на сайті Metacritic. Metacritic — вебсайт, який збирає відгуки про музичні альбоми, відеоігри, фільми і телевізійні шоу. Для кожного продукту вираховується середня числова оцінка всіх опублікованих оглядів. Уривок з кожного огляду надається разом з посиланням на джерело. Три кольори — зелений, жовтий і червоний узагальнюють ставлення критика. Це дає уявлення про загальну привабливість продукту серед рецензентів і, меншою мірою, серед громадськості. Оцінювання Metascore є складним процесом. Metacritic ретельно відбирає велику групу найшанованіших критиків світу, призначає оцінки їхнім оглядам і застосовує середнє зважене значення, щоб підсумувати діапазон їхніх думок. Результатом є єдине число, яке відображає суть думки критиків в одному Metascore. Кожен фільм, гра, телешоу та альбом, представлені на Metacritic, отримує оцінку Metascore, якщо були зібрані щонайменше чотири рецензії критиків.
+
+```{r}
+gamedata<-read_delim("C:\\Users\\1\\Downloads\\metacritic_18.07.2021-csv.csv")
+```
+В першу чергу була зроблена вибірка даних, яка показує середню оцінку metascore ігор, згрупованих за роком їх виходу, а також кількість виданих ігор за ці роки та скільки з них є хорошими(metascore більше 74)
+```{r}
+ScoreByYear<-gamedata %>%
+  separate(date,into = c("Day", "Month", "Year")) %>%
+  group_by(Year) %>%
+  summarise(mean_metascore=mean(metascore),Games=n(),Good_games=sum(metascore>74))
+ScoreByYear
+```
+
+Сам аналіз даних проводиться шляхом візуалізації за допомогою графіків.
+```{r, fig.width=10}
+ggplot2::ggplot(data=ScoreByYear) +
+  geom_point(mapping=aes(x=Year,y=mean_metascore,group=1)) +
+  geom_line(mapping=aes(x=Year,y=mean_metascore,group=1))
+```
+Користувачеві може здатися, що у 2000 році кількість якісних ігор різко впала, що понизило середню оцінку майже на 15 баллів, проте уже наступний графік ставить все на свої місця - кількість оцінених ігор 2000 року випуску набагато більша ніж більш ранніх. Надалі кількість продовжила зростати.
+```{r, fig.width=10}
+ggplot2::ggplot(data=ScoreByYear) +
+  geom_point(mapping=aes(x=Year,y=Games,group=1)) +
+  geom_line(mapping=aes(x=Year,y=Games,group=1))
+```
+Якщо взяти на часовому проміжку кількість хороших ігор, буде помітно що графіки с загальною кількістю та з хорошими іграми візуально дуже схожі, що говорить, про те, що відсоток якісних ігор залишався більш-менш стабільним
+```{r, fig.width=10}
+ggplot2::ggplot(data=ScoreByYear) +
+  geom_point(mapping=aes(x=Year,y=Good_games,group=1)) +
+  geom_line(mapping=aes(x=Year,y=Good_games,group=1))
+```
+З особистого інтересу можна порівняти кількість оцінених ігор різної якості випущених у 1999 і 2000 роках. Можна побачити, що було оцінено набагато більше поганих і середніх ігор 2000-ого року випуску. Це наштовхує на декілька можливих висновків: або критики взагалі не звертали уваги на погані ігри до 2000 року і збільшення кількості оцінок пов'язане зі збільшенням кількості рецензій або Metacritic, який розпочав свою діяльність у 2001, збирав рецензії лише на найвідоміші, а тому і найкращі, ігри 90-х, віддавши перевагу новим продуктам
+```{r}
+GamesByQualityIn1999<-gamedata %>%
+  filter(grepl(".*1999",date)) %>%
+  mutate(Quality=ifelse(metascore>89,"Excellent",ifelse(metascore>74,"Good",ifelse(metascore>49,"Mixed","Bad")))) %>%
+  group_by(Quality) %>%
+  summarise(Games=n())
+GamesByQualityIn1999
+```
+
+```{r, fig.width=15, fig.height=5}
+ggplot(data = GamesByQualityIn1999) + 
+  geom_col(mapping = aes(y=Games, x=Quality, color=Quality, fill=Quality))
+```
+
+```{r}
+GamesByQualityIn2000<-gamedata %>%
+  filter(grepl(".*2000",date)) %>%
+  mutate(Quality=ifelse(metascore>89,"Excellent",ifelse(metascore>74,"Good",ifelse(metascore>49,"Mixed","Bad")))) %>%
+  group_by(Quality) %>%
+  summarise(Games=n())
+GamesByQualityIn2000
+```
+
+```{r, fig.width=15, fig.height=5}
+ggplot(data = GamesByQualityIn2000) + 
+  geom_col(mapping = aes(y=Games, x=Quality, color=Quality, fill=Quality))
+```
+Якщо категоризувати всі ігри представлені у датасеті за якістю, то можна побачити, що графік виглядає майже так само, як і за 2000 рік, з чого можна припустити, що таке відношення зберігалось на протязі двох десятилітть з мінімальними відхиленнями
+```{r}
+GamesByQuality<-gamedata %>%
+  mutate(Quality=ifelse(metascore>89,"Excellent",ifelse(metascore>74,"Good",ifelse(metascore>49,"Mixed","Bad")))) %>%
+  group_by(Quality) %>%
+  summarise(Games=n())
+GamesByQuality
+```
+
+```{r, fig.width=15, fig.height=5}
+ggplot(data = GamesByQuality) + 
+  geom_col(mapping = aes(y=Games, x=Quality, color=Quality, fill=Quality))
+```
+
+Наступний набір даних включає в себе інформацію, про кількість ігор доступних для різних ігрових платформ
+
+```{r}
+GamesByPlatform<-gamedata %>%
+  separate(date,into = c("Day", "Month", "Year")) %>%
+  group_by(Year,platforms) %>%
+  summarise(Games=n())
+GamesByPlatform
+```
+
+На графіку подане відношення кількості оцінених ігор, доступних для різних платформ, на протязі останніх трьох десятилітть. Згідно цього графіку виходить, що у 90-х, ігри оцінені на metacritic працювали майже виключно на PC, Nintendo 64 та Playstation. Станом на 1999 рік, ПК уступили першість, яку вони до цього займали, Playstation. На початку 0-их прийшловся недовгий період ігор для Sega Dreamcast, Nintendo 64 уступило місце Nintendo DS і Nintendo Game Boy Advance, Playstation замінив Playstation 2, також з'явився XBOX. На протязі двох десятилітть ігрові платформи були замінені бульш досконалими від тих самих виробників. XBOX не зважаючи на поточну платформу все одно займав приблизно однакову частину ринку на протязі всього часу, помітно зменшившись лише в 2010-2013, коли всім довелося посунутись через ігри iOS. Схожа історія сталася і з PS та PC. У 2010-2015 було випущено багато оцінених ігор на iOS, проте в останні декілька років їх кількість впала до мінімуму. Оскільки продукти Apple не стали менш популярні, скоріш за все Metacritic просто перестали їх оцінювати через велику кількість. У Nintendo був період з 2011 по 2016, коли вони мали дуже малу частку ігор, згідно датасету, які були зроблені під Wii та 3DS. Проте після цього, з випуском Nintendo Switch, їм повернулася популярність і на цей день для цього пристрою існує значна частка всіх ігор, на рівні з XBOX, PS та PC. 
+```{r, fig.width=15, fig.height=5}
+ggplot(data = GamesByPlatform) + 
+  geom_bar(mapping = aes(x = Year,Games,fill = platforms), position = "fill", stat="identity")
+```
+Наступна вибірка даних включає в себе інформацію, про кількість ігор різних жанрів, оцінених на протязі років
+```{r}
+GamesByGenre<-gamedata %>%
+  separate(date,into = c("Day", "Month", "Year")) %>%
+  group_by(Year,genre) %>%
+  summarise(Games=n())
+GamesByGenre
+```
+На графіку подане відношення кількості ігор різних жанрів, на протязі останніх трьох десятилітть. Згідно цього графіку виходить, що на всьому розглянутому протязі часу найбільшу частку складали ігри жанру Action. Іншими стабільно популярними жанрами були стратегії, first-person і рольові ігри. У 0-х жанр Adventure занепав, у той час, як спортивні ігри досягли свого піку. Adventure проте відродився з 2010 року, а доля спорту навпаки зменшилась. Платформери почували себе комфортно зі своєю порівняно невеликою часткою ігор до 2013 року, після чого їх кількість різко впала. Інші жанри займали стабільно малі частки
+```{r, fig.width=15, fig.height=5}
+ggplot(data = GamesByGenre) + 
+  geom_bar(mapping = aes(x = Year,Games,fill = genre), position = "fill", stat="identity")
+```
+Наступна вибірка даних включає в себе інформацію про частку ігор різних жанрів на різних платформах
+```{r}
+PlatformsAndGenres <- gamedata %>%
+  group_by(platforms,genre) %>%
+  summarise(Games=n())
+PlatformsAndGenres
+```
+На графіку можна побачити, що найбільшу частку на всіх платформах вже звично займає жанр Action. Найбільша кількість платформерів спостерігається на платформах виробництва Nintendo. Решта жанрів переважно займають стабільно невеликі частки, зникаючи майже повністю на деяких платформах(як adventure на Game boy чи першому Xbox)
+```{r, fig.width=15, fig.height=5}
+ggplot(data = PlatformsAndGenres) + 
+  geom_bar(mapping = aes(x = platforms,Games,fill = genre), position = "fill", stat="identity")
+```
+Наступна вибірка даних включає в себе інформацію про середню оцінку ігор різних жанрів
+```{r}
+ScoreByGenre <- gamedata %>%
+  group_by(genre) %>%
+  summarise(mean_metascore=mean(metascore))
+ScoreByGenre
+```
+Середня оцінка ігор всіх жанрів тримається у приблизному діапазоні 60-70 балів. Найвищі середні оцінки мають рольові та покрокові ігри(трохи вище 70). Найнижчу - ігри жанру Party(60)
+```{r, fig.width=15, fig.height=5}
+ggplot(data = ScoreByGenre) + 
+  geom_col(mapping = aes(y=mean_metascore, x=genre, color=genre, fill=genre))
+```
+Наступна вибірка даних включає в себе інформацію про середню оцінку ігор різних платформ
+```{r}
+ScoreByPlatform <- gamedata %>%
+  group_by(platforms) %>%
+  summarise(mean_metascore=mean(metascore))
+ScoreByPlatform
+```
+Середня оцінка ігор всіх платформ тримається у приблизному діапазоні 60-75 балів. Найвищі середні оцінки мають ігри на iOS, iOS(Apple Arcade), Nintendo 64 та XBOX series X(вище 70). Найнижчу - ігри на Wii(60)
+```{r, fig.width=15, fig.height=5}
+ggplot(data = ScoreByPlatform) + 
+  geom_col(mapping = aes(y=mean_metascore, x=platforms, color=platforms, fill=platforms))
+```
+Наступна вибірка даних включає в себе інформацію про загальну кількість ігор різних жанрів
+```{r}
+GamesByGenreTotal<-gamedata %>%
+  group_by(genre) %>%
+  summarise(Games=n())
+GamesByGenreTotal
+```
+Згідно графіку, найбільше ігор існує в жанрі Action, що не дивує. На друге місце можна поставити Adventure, first-person, рольові та стратегії. На третє - все інше, окрім fighting, flight, party, wargame і wrestling, які мають мізерну кількість оцінених ігор 
+```{r, fig.width=15, fig.height=5}
+ggplot(data = GamesByGenreTotal) + 
+  geom_col(mapping = aes(y=Games, x=genre, color=genre, fill=genre))
+```
+Наступна вибірка даних включає в себе інформацію про загальну кількість ігор різних платформ
+```{r}
+GamesByPlatformTotal<-gamedata %>%
+  group_by(platforms) %>%
+  summarise(Games=n())
+GamesByPlatformTotal
+```
+Згідно графіку, найбільше ігор існує на PC. На друге місце, якщо рахувати кожну платформу окремо, можна поставити iOS. Найпопулярніші платформи Nintendo, Sony і Xbox це Switch, Playstation 4 та Xbox 360 відповідно. Якщо рахувати загальну кількість ігор на платформах одного виробника, то платформи Playstation будуть на першому місці серед консолей, Nintendo на другому і Xbox на третьому.
+```{r, fig.width=15, fig.height=5}
+ggplot(data = GamesByPlatformTotal) + 
+  geom_col(mapping = aes(y=Games, x=platforms, color=platforms, fill=platforms))
+```
